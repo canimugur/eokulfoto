@@ -140,6 +140,8 @@ const App = (function() {
         currentStudent = null;
     }
 
+    // KRİTİK DÜZELTME: setTimeout kaldırıldı!
+    // Kullanıcı etkileşimi (user gesture) korunmalı ki showDirectoryPicker çalışsın
     async function handleFileSelect(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -149,9 +151,11 @@ const App = (function() {
 
         const result = await ExcelHandler.processFile(file);
         if (result.success) {
-            elements.importStatus.textContent = `Başarılı! ${result.count} öğrenci aktarıldı. Kamera başlatılıyor...`;
+            elements.importStatus.textContent = `Başarılı! ${result.count} öğrenci aktarıldı.`;
             elements.importStatus.classList.add('success');
-            setTimeout(startMainSession, 1000);
+            
+            // HEMEN BAŞLAT - setTimeout YOK! (user gesture korunuyor)
+            await startMainSession();
         } else {
             elements.importStatus.textContent = `Hata: ${result.error}`;
             elements.importStatus.classList.add('error');
@@ -163,6 +167,8 @@ const App = (function() {
         elements.setupView.classList.add('hidden');
         elements.mainView.classList.remove('hidden');
 
+        // ÖNCE DOSYA SİSTEMİNİ BAŞLAT (klasör seçme penceresi açılır)
+        // Bu hala kullanıcı etkileşimi içinde sayılır
         await FileSystem.init();
 
         if (FileSystem.isUsingZip()) {
@@ -170,6 +176,7 @@ const App = (function() {
             elements.btnFinish.textContent = 'Oturumu Bitir ve ZIP İndir';
         }
 
+        // SONRA KAMERAYI AÇ
         await Camera.start(elements.cameraVideo, elements.cameraOverlay);
         elements.searchInput.focus();
     }

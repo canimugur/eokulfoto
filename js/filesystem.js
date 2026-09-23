@@ -1,20 +1,40 @@
 const FileSystem = (function() {
     let dirHandle = null;
     let zip = null;
-    let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    // iOS tespiti (Safari'de showDirectoryPicker desteklenmez)
+    function isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
+    // File System Access API destek kontrolü
+    function isFileSystemAccessSupported() {
+        return 'showDirectoryPicker' in window && !isIOS();
+    }
 
     async function init() {
-        if (!isIOS && 'showDirectoryPicker' in window) {
+        // Sadece desteklenen tarayıcılarda klasör seçimi dene
+        if (isFileSystemAccessSupported()) {
             try {
-                dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                console.log("Klasör seçme penceresi açılıyor...");
+                dirHandle = await window.showDirectoryPicker({ 
+                    mode: 'readwrite',
+                    startIn: 'downloads' // Varsayılan olarak İndirilenler klasörünü aç
+                });
+                console.log("Klasör seçildi:", dirHandle.name);
             } catch (e) {
-                console.log("Klasör seçimi iptal edildi. ZIP moduna geçiliyor.");
+                console.log("Klasör seçimi iptal edildi veya hata:", e.message);
                 dirHandle = null;
             }
+        } else {
+            console.log("File System Access API desteklenmiyor. ZIP moduna geçiliyor.");
         }
 
+        // Klasör seçilemediyse ZIP modu
         if (!dirHandle) {
             zip = new JSZip();
+            console.log("ZIP modu aktif");
         }
     }
 

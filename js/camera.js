@@ -11,12 +11,18 @@ const Camera = (function() {
         overlayEl.style.aspectRatio = `${settings.photoWidth} / ${settings.photoHeight}`;
 
         try {
+            // ÖNCE ARKA KAMERA DENE (vesikalık için uygun)
             stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+                video: { 
+                    facingMode: { ideal: 'environment' }, // Arka kamera öncelikli
+                    width: { ideal: 1280 }, 
+                    height: { ideal: 720 } 
+                },
                 audio: false
             });
             videoEl.srcObject = stream;
 
+            // Video metadata yüklenene kadar bekle
             await new Promise((resolve) => {
                 videoEl.onloadedmetadata = () => {
                     videoEl.play().then(resolve).catch(resolve);
@@ -25,11 +31,43 @@ const Camera = (function() {
                 setTimeout(resolve, 5000);
             });
 
-            console.log(`Kamera hazır: ${videoEl.videoWidth}x${videoEl.videoHeight}`);
+            // Ayna efektini kaldır (arka kamera için gerekmez)
+            videoEl.style.transform = 'none';
+
+            console.log(`Kamera hazır: ${videoEl.videoWidth}x${videoEl.videoHeight} (Arka Kamera)`);
 
         } catch (err) {
-            console.error("Kamera hatası:", err);
-            alert("Kameraya erişilemedi. Lütfen tarayıcı izinlerini kontrol edin.");
+            console.warn("Arka kamera açılamadı, ön kamera deneniyor:", err);
+            
+            // ARKA KAMERA BAŞARISIZSA ÖN KAMERAYA GEÇ
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: 'user', // Ön kamera
+                        width: { ideal: 1280 }, 
+                        height: { ideal: 720 } 
+                    },
+                    audio: false
+                });
+                videoEl.srcObject = stream;
+
+                await new Promise((resolve) => {
+                    videoEl.onloadedmetadata = () => {
+                        videoEl.play().then(resolve).catch(resolve);
+                    };
+                    videoEl.onerror = resolve;
+                    setTimeout(resolve, 5000);
+                });
+
+                // Ön kamera için ayna efekti
+                videoEl.style.transform = 'scaleX(-1)';
+
+                console.log(`Kamera hazır: ${videoEl.videoWidth}x${videoEl.videoHeight} (Ön Kamera)`);
+
+            } catch (err2) {
+                console.error("Kamera hatası:", err2);
+                alert("Kameraya erişilemedi. Lütfen tarayıcı izinlerini kontrol edin.");
+            }
         }
     }
 
