@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Okul Vesikalık Fotoğraf Sistemi</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    
+    <!-- CDN Kütüphaneleri -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    
+    <!-- HEADER -->
+    <header class="app-header">
+        <h1>Vesikalık Fotoğraf Sistemi</h1>
+        <div class="header-actions">
+            <button id="btn-help" class="icon-btn" title="Yardım">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+            </button>
+            <button id="btn-settings" class="icon-btn" title="Ayarlar">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="app-main">
+        
+        <!-- SETUP VIEW (Excel Import) -->
+        <div id="setup-view">
+            <section class="card">
+                <h2>1. Öğrenci Listesini İçe Aktar</h2>
+                <p class="card-desc">Excel (.xlsx) veya CSV dosyası seçin. Sütunlar otomatik algılanır.</p>
+                <div class="setup-buttons">
+                    <button id="btn-import" class="btn-primary">📁 Dosya Seç ve Yükle</button>
+                    <button id="btn-how-to-prepare" class="btn-secondary">❓ Dosya Nasıl Hazırlanır?</button>
+                </div>
+                <input type="file" id="excel-input" accept=".xlsx,.xls,.csv" hidden>
+                <p id="import-status" class="status-text"></p>
+            </section>
+        </div>
+
+        <!-- MAIN VIEW (Camera + Search) -->
+        <div id="main-view" class="hidden">
+            
+            <!-- Camera Section -->
+            <section class="camera-section">
+                <div class="camera-container">
+                    <video id="camera-video" autoplay playsinline muted></video>
+                    <div id="camera-overlay" class="camera-overlay"></div>
+                </div>
+            </section>
+
+            <!-- Search Section -->
+            <section class="card search-card">
+                <div class="search-bar">
+                    <input type="text" id="search-input" placeholder="Öğrenci Numarası girin..." autocomplete="off">
+                    <button id="btn-search" class="btn-primary">Bul</button>
+                </div>
+                
+                <!-- Student Info Card (Shown when found) -->
+                <div id="student-info-card" class="student-info-card hidden">
+                    <div class="student-details">
+                        <h3 id="info-name">-</h3>
+                        <p id="info-meta">-</p>
+                        <span id="info-status" class="status-badge">Bekliyor</span>
+                    </div>
+                    <button id="btn-snap" class="btn-snap" disabled>Fotoğraf Çek (Boşluk)</button>
+                </div>
+
+                <!-- Student Not Found (Shown when not found) -->
+                <div id="student-not-found" class="student-not-found hidden">
+                    <p>Öğrenci bulunamadı.</p>
+                    <button id="btn-add-new" class="btn-primary">Yeni Öğrenci Olarak Ekle</button>
+                </div>
+            </section>
+
+            <!-- Session Controls -->
+            <div class="session-controls">
+                <button id="btn-finish" class="btn-secondary hidden">Oturumu Bitir ve İndir</button>
+                <p id="snap-feedback" class="snap-feedback hidden"></p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- HELP MODAL -->
+    <div id="modal-help" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>📚 Yardım: Sınıf Listesi Dosyası Hazırlama</h2>
+                <button class="modal-close btn-close-help">&times;</button>
+            </div>
+            <div class="modal-body help-body">
+                
+                <section class="help-section">
+                    <h3>📋 Genel Bilgi</h3>
+                    <p>Uygulama, öğrenci listesini bir <strong>Excel (.xlsx)</strong> veya <strong>CSV</strong> dosyasından okur. Dosyadaki sütun başlıklarını <strong>akıllıca tanır</strong>, yani sütunların sırası önemli değildir.</p>
+                    <div class="help-tip">
+                        💡 <strong>İpucu:</strong> Excel dosyanızda sadece gerekli 4 sütun (Numara, Ad, Soyad, Sınıf) bulunmak zorunda değil. Fazla sütunlar otomatik olarak görmezden gelinir.
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>🏷️ Kabul Edilen Sütun Başlıkları</h3>
+                    <p>Aşağıdaki başlıklardan herhangi birini kullanabilirsiniz (büyük/küçük harf fark etmez):</p>
+                    
+                    <table class="help-table">
+                        <thead>
+                            <tr>
+                                <th>Alan</th>
+                                <th>Kabul Edilen Başlıklar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Numara</strong></td>
+                                <td>Numara, No, Öğrenci No, T.C., T.C. Kimlik No, Kimlik, TC</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Ad</strong></td>
+                                <td>Ad, Adı, Öğrenci Adı, İsim</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Soyad</strong></td>
+                                <td>Soyad, Soyadı, Soyisim</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sınıf</strong></td>
+                                <td>Sınıf, Sınıfı, Şube, Sınıf Adı, Class</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="help-section">
+                    <h3>✅ Örnek Dosya Düzenleri</h3>
+                    
+                    <h4>Örnek 1: Klasik Düzen</h4>
+                    <div class="code-block">Numara | Ad     | Soyad  | Sınıf
+-------|--------|--------|------
+101    | Ahmet  | Yılmaz | 9-A
+102    | Ayşe   | Demir  | 9-A
+103    | Mehmet | Kaya   | 10-B</div>
+
+                    <h4>Örnek 2: Farklı Başlıklar (Aynı Çalışır)</h4>
+                    <div class="code-block">T.C. Kimlik No | Öğrenci Adı | Soyadı | Şube
+---------------|-------------|--------|------
+12345678901    | Ali         | Veli   | 11-C
+12345678902    | Fatma       | Çelik  | 11-C</div>
+
+                    <h4>Örnek 3: Sıralama Farklı Olsa Bile Çalışır</h4>
+                    <div class="code-block">Sınıf | Soyad  | Ad     | No
+------|--------|--------|-----
+9-A   | Yılmaz | Ahmet  | 101
+10-B  | Demir  | Ayşe   | 102</div>
+                </section>
+
+                <section class="help-section">
+                    <h3>🪜 Adım Adım Excel Hazırlama</h3>
+                    <ol class="help-steps">
+                        <li><strong>Excel'i açın</strong> (Microsoft Excel, LibreOffice Calc veya Google Sheets)</li>
+                        <li><strong>İlk satıra başlıkları yazın:</strong><br><code>Numara</code> | <code>Ad</code> | <code>Soyad</code> | <code>Sınıf</code></li>
+                        <li><strong>Alt satırlara öğrenci bilgilerini girin.</strong></li>
+                        <li><strong>Farklı Kaydet</strong> menüsüne gidin.</li>
+                        <li>Dosya türü olarak <strong>"CSV UTF-8 (Virgülle ayrılmış)"</strong> seçin.</li>
+                        <li>Dosyaya bir isim verin (örn: <code>9-A_sinifi.csv</code>) ve kaydedin.</li>
+                        <li>Uygulamada <strong>"Dosya Seç ve Yükle"</strong> butonuna tıklayın ve hazırladığınız dosyayı seçin.</li>
+                    </ol>
+                </section>
+
+                <section class="help-section">
+                    <h3>⚠️ Sık Yapılan Hatalar</h3>
+                    <div class="help-error">
+                        <strong>❌ Hata 1: Başlık satırı yok</strong>
+                        <p>İlk satır mutlaka başlıklardan oluşmalı. Veriler ikinci satırdan başlamalı.</p>
+                    </div>
+                    <div class="help-error">
+                        <strong>❌ Hata 2: Yanlış kodlama</strong>
+                        <p>CSV kaydederken "UTF-8" seçmezseniz Türkçe karakterler (ğ, ü, ş, ö, ç, ı) bozulur.</p>
+                    </div>
+                    <div class="help-error">
+                        <strong>❌ Hata 3: Boş hücreler</strong>
+                        <p>Numara veya Ad alanı boş olan satırlar otomatik olarak atlanır.</p>
+                    </div>
+                    <div class="help-error">
+                        <strong>❌ Hata 4: Birleşik hücreler</strong>
+                        <p>Excel'de birleştirilmiş (merge) hücreler kullanmayın, okunamaz.</p>
+                    </div>
+                </section>
+
+                <section class="help-section">
+                    <h3>📥 Hazır Şablon İndir</h3>
+                    <p>Hızlı başlamak için hazır CSV şablonunu indirebilirsiniz:</p>
+                    <button id="btn-download-template" class="btn-primary">📥 Örnek Şablonu İndir (CSV)</button>
+                </section>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary btn-close-help">Anladım, Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="modal-settings" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Ayarlar</h2>
+                <button class="modal-close" id="btn-close-settings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <section class="settings-section">
+                    <h3>Fotoğraf Boyutları (Piksel)</h3>
+                    <div class="form-group">
+                        <label for="input-width">Genişlik:</label>
+                        <input type="number" id="input-width" min="50" max="2000" value="133">
+                        <span>piksel</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-height">Yükseklik:</label>
+                        <input type="number" id="input-height" min="50" max="2000" value="171">
+                        <span>piksel</span>
+                    </div>
+                </section>
+                <section class="settings-section">
+                    <h3>Dosya Boyutu Sıkıştırma</h3>
+                    <div class="form-group">
+                        <label>
+                            <input type="radio" name="compression-mode" value="range" checked>
+                            Belirli aralıkta sıkıştır
+                        </label>
+                    </div>
+                    <div class="form-group compression-range">
+                        <label for="input-min-kb">Min:</label>
+                        <input type="number" id="input-min-kb" min="5" max="500" value="20">
+                        <span>KB</span>
+                    </div>
+                    <div class="form-group compression-range">
+                        <label for="input-max-kb">Max:</label>
+                        <input type="number" id="input-max-kb" min="5" max="1000" value="150">
+                        <span>KB</span>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="radio" name="compression-mode" value="original">
+                            Orijinal boyutta bırak
+                        </label>
+                    </div>
+                </section>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-save-settings" class="btn-primary">Kaydet</button>
+                <button id="btn-cancel-settings" class="btn-secondary">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW STUDENT MODAL -->
+    <div id="modal-new-student" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Yeni Öğrenci Ekle</h2>
+                <button class="modal-close btn-close-new-student">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="card-desc">Bu numaraya ait öğrenci listede yok. Bilgileri girerek listeye ekleyin.</p>
+                <div class="form-group">
+                    <label for="new-student-id">Numara:</label>
+                    <input type="text" id="new-student-id" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-student-name">Ad:</label>
+                    <input type="text" id="new-student-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-student-surname">Soyad:</label>
+                    <input type="text" id="new-student-surname" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-student-class">Sınıf:</label>
+                    <input type="text" id="new-student-class" placeholder="Örn: 9-A" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-save-new-student" class="btn-primary">Ekle ve Fotoğrafa Geç</button>
+                <button class="btn-secondary btn-close-new-student">Vazgeç</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="js/settings.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/excel.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/filesystem.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
