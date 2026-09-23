@@ -60,19 +60,15 @@ const ExcelHandler = (function() {
 
         headers.forEach((header, index) => {
             if (!header) return;
-            
             const h = header.toLocaleLowerCase('tr-TR');
 
             if (h.includes('numara') || h.includes('no') || h.includes('tc') || h.includes('kimlik') || h.includes('öğrenci no')) {
                 map.number = index;
-            } 
-            else if ((h.includes('ad') || h.includes('isim')) && !h.includes('soyad') && !h.includes('soyisim')) {
+            } else if ((h.includes('ad') || h.includes('isim')) && !h.includes('soyad') && !h.includes('soyisim')) {
                 map.name = index;
-            } 
-            else if (h.includes('soyad') || h.includes('soyisim')) {
+            } else if (h.includes('soyad') || h.includes('soyisim')) {
                 map.surname = index;
-            } 
-            else if (h.includes('sınıf') || h.includes('sinif') || h.includes('şube') || h.includes('sube') || h.includes('class')) {
+            } else if (h.includes('sınıf') || h.includes('sinif') || h.includes('şube') || h.includes('sube') || h.includes('class')) {
                 map.class = index;
             }
         });

@@ -12,17 +12,14 @@ const App = (function() {
 
     function cacheDOMElements() {
         elements = {
-            // Views
             setupView: document.getElementById('setup-view'),
             mainView: document.getElementById('main-view'),
             
-            // Setup
             btnImport: document.getElementById('btn-import'),
             excelInput: document.getElementById('excel-input'),
             importStatus: document.getElementById('import-status'),
             btnHowToPrepare: document.getElementById('btn-how-to-prepare'),
             
-            // Main View - Search
             searchInput: document.getElementById('search-input'),
             btnSearch: document.getElementById('btn-search'),
             studentInfoCard: document.getElementById('student-info-card'),
@@ -33,13 +30,11 @@ const App = (function() {
             studentNotFound: document.getElementById('student-not-found'),
             btnAddNew: document.getElementById('btn-add-new'),
             
-            // Main View - Camera
             cameraVideo: document.getElementById('camera-video'),
             cameraOverlay: document.getElementById('camera-overlay'),
             btnFinish: document.getElementById('btn-finish'),
             snapFeedback: document.getElementById('snap-feedback'),
 
-            // Settings Modal
             modalSettings: document.getElementById('modal-settings'),
             btnSettings: document.getElementById('btn-settings'),
             btnCloseSettings: document.getElementById('btn-close-settings'),
@@ -52,7 +47,6 @@ const App = (function() {
             compressionRangeInputs: document.querySelectorAll('.compression-range'),
             compressionModeRadios: document.querySelectorAll('input[name="compression-mode"]'),
 
-            // New Student Modal
             modalNewStudent: document.getElementById('modal-new-student'),
             newStudentId: document.getElementById('new-student-id'),
             newStudentName: document.getElementById('new-student-name'),
@@ -61,7 +55,6 @@ const App = (function() {
             btnSaveNewStudent: document.getElementById('btn-save-new-student'),
             btnCloseNewStudent: document.querySelectorAll('.btn-close-new-student'),
 
-            // Help Modal (YENİ)
             modalHelp: document.getElementById('modal-help'),
             btnHelp: document.getElementById('btn-help'),
             btnCloseHelp: document.querySelectorAll('.btn-close-help'),
@@ -70,11 +63,9 @@ const App = (function() {
     }
 
     function bindEvents() {
-        // Import
         elements.btnImport.addEventListener('click', () => elements.excelInput.click());
         elements.excelInput.addEventListener('change', handleFileSelect);
 
-        // Search
         elements.btnSearch.addEventListener('click', handleSearch);
         elements.searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleSearch();
@@ -83,10 +74,8 @@ const App = (function() {
             hideAllCards();
         });
 
-        // Snap
         elements.btnSnap.addEventListener('click', handleSnap);
 
-        // Add New Student
         elements.btnAddNew.addEventListener('click', openNewStudentModal);
         elements.btnSaveNewStudent.addEventListener('click', saveNewStudent);
         elements.btnCloseNewStudent.forEach(btn => {
@@ -96,7 +85,6 @@ const App = (function() {
             });
         });
 
-        // Keyboard Shortcut (Space to snap)
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' && !elements.mainView.classList.contains('hidden')) {
                 if (document.activeElement !== elements.searchInput && !elements.btnSnap.disabled) {
@@ -106,17 +94,14 @@ const App = (function() {
             }
         });
 
-        // Finish Session
         elements.btnFinish.addEventListener('click', finishSession);
 
-        // Settings
         elements.btnSettings.addEventListener('click', () => elements.modalSettings.classList.remove('hidden'));
         elements.btnCloseSettings.addEventListener('click', () => elements.modalSettings.classList.add('hidden'));
         elements.btnCancelSettings.addEventListener('click', () => elements.modalSettings.classList.add('hidden'));
         elements.btnSaveSettings.addEventListener('click', saveSettings);
         elements.compressionModeRadios.forEach(r => r.addEventListener('change', updateCompressionRangeVisibility));
 
-        // Help (YENİ)
         elements.btnHelp.addEventListener('click', openHelpModal);
         elements.btnHowToPrepare.addEventListener('click', openHelpModal);
         elements.btnCloseHelp.forEach(btn => {
@@ -125,7 +110,6 @@ const App = (function() {
         elements.btnDownloadTemplate.addEventListener('click', downloadTemplate);
     }
 
-    // --- HELP (YENİ) ---
     function openHelpModal() {
         elements.modalHelp.classList.remove('hidden');
     }
@@ -149,7 +133,6 @@ const App = (function() {
         URL.revokeObjectURL(url);
     }
 
-    // --- UTILS ---
     function hideAllCards() {
         elements.studentInfoCard.classList.add('hidden');
         elements.studentNotFound.classList.add('hidden');
@@ -157,7 +140,6 @@ const App = (function() {
         currentStudent = null;
     }
 
-    // --- EXCEL IMPORT ---
     async function handleFileSelect(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -181,21 +163,17 @@ const App = (function() {
         elements.setupView.classList.add('hidden');
         elements.mainView.classList.remove('hidden');
 
-        // Dosya sistemini başlat
         await FileSystem.init();
 
-        // ZIP modundaysa "Oturumu Bitir" butonunu hemen göster
         if (FileSystem.isUsingZip()) {
             elements.btnFinish.classList.remove('hidden');
             elements.btnFinish.textContent = 'Oturumu Bitir ve ZIP İndir';
         }
 
-        // Kamerayı aç
         await Camera.start(elements.cameraVideo, elements.cameraOverlay);
         elements.searchInput.focus();
     }
 
-    // --- SEARCH ---
     async function handleSearch() {
         const query = elements.searchInput.value.trim();
         
@@ -232,7 +210,6 @@ const App = (function() {
         }
     }
 
-    // --- SNAP ---
     async function handleSnap() {
         if (!currentStudent || elements.btnSnap.disabled) return;
 
@@ -240,8 +217,128 @@ const App = (function() {
         elements.btnSnap.disabled = true;
 
         try {
-            // 1. Fotoğrafı çek, kırp ve sıkıştır
             const blob = await Camera.capture();
 
             if (!blob) {
-                throw new Error("Fotoğraf oluşturulamadı. Lütfen tekrar deneyin
+                throw new Error("Fotoğraf oluşturulamadı. Lütfen tekrar deneyin.");
+            }
+
+            const result = await FileSystem.saveFile(blob, currentStudent);
+            
+            currentStudent.status = 'done';
+            await Storage.saveStudent(currentStudent);
+
+            elements.infoStatus.textContent = 'Fotoğrafı Çekildi';
+            elements.infoStatus.classList.add('done');
+            elements.btnSnap.textContent = 'Tekrar Çek';
+
+            snapCount++;
+
+            showFeedback(result);
+
+            setTimeout(() => {
+                elements.searchInput.value = '';
+                hideAllCards();
+                elements.searchInput.focus();
+            }, 800);
+
+        } catch (err) {
+            console.error("Çekim hatası:", err);
+            alert("Fotoğraf kaydedilirken bir hata oluştu: " + err.message);
+            elements.btnSnap.disabled = false;
+            elements.btnSnap.textContent = 'Fotoğraf Çek (Boşluk)';
+        }
+    }
+
+    function showFeedback(result) {
+        let msg = '';
+        if (result.method === 'direct') {
+            msg = `✅ Kaydedildi! (${snapCount} fotoğraf)`;
+        } else {
+            msg = `📦 ZIP'e eklendi! (${snapCount} fotoğraf) — İndirmek için "Oturumu Bitir" butonuna basın.`;
+        }
+
+        if (elements.snapFeedback) {
+            elements.snapFeedback.textContent = msg;
+            elements.snapFeedback.classList.remove('hidden');
+            setTimeout(() => {
+                elements.snapFeedback.classList.add('hidden');
+            }, 3000);
+        }
+    }
+
+    function openNewStudentModal() {
+        const number = elements.searchInput.value.trim();
+        elements.newStudentId.value = number;
+        elements.newStudentId.readOnly = false;
+        elements.newStudentName.value = '';
+        elements.newStudentSurname.value = '';
+        elements.newStudentClass.value = '';
+        elements.modalNewStudent.classList.remove('hidden');
+        elements.newStudentName.focus();
+    }
+
+    async function saveNewStudent() {
+        const number = elements.newStudentId.value;
+        const name = elements.newStudentName.value.trim();
+        const surname = elements.newStudentSurname.value.trim();
+        const studentClass = elements.newStudentClass.value.trim();
+
+        if (!name || !surname || !studentClass) {
+            alert('Lütfen tüm alanları doldurun.');
+            return;
+        }
+
+        const newStudent = { number, name, surname, class: studentClass, status: 'pending' };
+        await Storage.saveStudent(newStudent);
+        elements.modalNewStudent.classList.add('hidden');
+        
+        elements.searchInput.value = number;
+        await handleSearch();
+    }
+
+    function finishSession() {
+        Camera.stop();
+
+        if (FileSystem.isUsingZip()) {
+            FileSystem.downloadZip();
+            elements.btnFinish.textContent = "ZIP İndirildi!";
+        } else {
+            elements.btnFinish.textContent = "Oturum Bitti";
+        }
+
+        elements.btnFinish.disabled = true;
+        alert(`Oturum tamamlandı! Toplam ${snapCount} fotoğraf işlendi.`);
+    }
+
+    function loadSettingsToUI() {
+        const s = Settings.getAll();
+        elements.inputWidth.value = s.photoWidth;
+        elements.inputHeight.value = s.photoHeight;
+        elements.inputMinKB.value = s.minFileSizeKB;
+        elements.inputMaxKB.value = s.maxFileSizeKB;
+        elements.compressionModeRadios.forEach(r => r.checked = (r.value === s.compressionMode));
+        updateCompressionRangeVisibility();
+    }
+
+    function updateCompressionRangeVisibility() {
+        const mode = document.querySelector('input[name="compression-mode"]:checked').value;
+        elements.compressionRangeInputs.forEach(el => el.style.display = mode === 'range' ? 'flex' : 'none');
+    }
+
+    function saveSettings() {
+        const newSettings = {
+            photoWidth: parseInt(elements.inputWidth.value) || 133,
+            photoHeight: parseInt(elements.inputHeight.value) || 171,
+            compressionMode: document.querySelector('input[name="compression-mode"]:checked').value,
+            minFileSizeKB: parseInt(elements.inputMinKB.value) || 20,
+            maxFileSizeKB: parseInt(elements.inputMaxKB.value) || 150
+        };
+        Settings.save(newSettings);
+        elements.modalSettings.classList.add('hidden');
+    }
+
+    return { init };
+})();
+
+document.addEventListener('DOMContentLoaded', App.init);

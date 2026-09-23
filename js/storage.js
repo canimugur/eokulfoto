@@ -14,7 +14,10 @@ const Storage = (function() {
                     objectStore.createIndex('status', 'status', { unique: false });
                 }
             };
-            request.onsuccess = (event) => { db = event.target.result; resolve(db); };
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                resolve(db);
+            };
             request.onerror = (event) => reject(event.target.error);
         });
     }

@@ -7,17 +7,14 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
     
-    <!-- CDN Kütüphaneleri -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
-    <!-- CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     
-    <!-- HEADER -->
     <header class="app-header">
         <h1>Vesikalık Fotoğraf Sistemi</h1>
         <div class="header-actions">
@@ -37,10 +34,8 @@
         </div>
     </header>
 
-    <!-- MAIN CONTENT -->
     <main class="app-main">
         
-        <!-- SETUP VIEW (Excel Import) -->
         <div id="setup-view">
             <section class="card">
                 <h2>1. Öğrenci Listesini İçe Aktar</h2>
@@ -54,10 +49,8 @@
             </section>
         </div>
 
-        <!-- MAIN VIEW (Camera + Search) -->
         <div id="main-view" class="hidden">
             
-            <!-- Camera Section -->
             <section class="camera-section">
                 <div class="camera-container">
                     <video id="camera-video" autoplay playsinline muted></video>
@@ -65,14 +58,12 @@
                 </div>
             </section>
 
-            <!-- Search Section -->
             <section class="card search-card">
                 <div class="search-bar">
                     <input type="text" id="search-input" placeholder="Öğrenci Numarası girin..." autocomplete="off">
                     <button id="btn-search" class="btn-primary">Bul</button>
                 </div>
                 
-                <!-- Student Info Card (Shown when found) -->
                 <div id="student-info-card" class="student-info-card hidden">
                     <div class="student-details">
                         <h3 id="info-name">-</h3>
@@ -82,14 +73,12 @@
                     <button id="btn-snap" class="btn-snap" disabled>Fotoğraf Çek (Boşluk)</button>
                 </div>
 
-                <!-- Student Not Found (Shown when not found) -->
                 <div id="student-not-found" class="student-not-found hidden">
                     <p>Öğrenci bulunamadı.</p>
                     <button id="btn-add-new" class="btn-primary">Yeni Öğrenci Olarak Ekle</button>
                 </div>
             </section>
 
-            <!-- Session Controls -->
             <div class="session-controls">
                 <button id="btn-finish" class="btn-secondary hidden">Oturumu Bitir ve İndir</button>
                 <p id="snap-feedback" class="snap-feedback hidden"></p>
@@ -98,7 +87,6 @@
 
     </main>
 
-    <!-- HELP MODAL -->
     <div id="modal-help" class="modal hidden">
         <div class="modal-content modal-large">
             <div class="modal-header">
@@ -157,7 +145,7 @@
 102    | Ayşe   | Demir  | 9-A
 103    | Mehmet | Kaya   | 10-B</div>
 
-                    <h4>Örnek 2: Farklı Başlıklar (Aynı Çalışır)</h4>
+                    <h4>Örnek 2: Farklı Başlıklar</h4>
                     <div class="code-block">T.C. Kimlik No | Öğrenci Adı | Soyadı | Şube
 ---------------|-------------|--------|------
 12345678901    | Ali         | Veli   | 11-C
@@ -216,7 +204,6 @@
         </div>
     </div>
 
-    <!-- SETTINGS MODAL -->
     <div id="modal-settings" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -270,7 +257,6 @@
         </div>
     </div>
 
-    <!-- NEW STUDENT MODAL -->
     <div id="modal-new-student" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -303,7 +289,6 @@
         </div>
     </div>
 
-    <!-- JavaScript Files -->
     <script src="js/settings.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/excel.js"></script>

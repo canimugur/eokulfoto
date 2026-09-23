@@ -10,9 +10,6 @@ const Camera = (function() {
         const settings = Settings.getAll();
         overlayEl.style.aspectRatio = `${settings.photoWidth} / ${settings.photoHeight}`;
 
-        // Overlay boyutunu ayarla
-        updateOverlaySize();
-
         try {
             stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -20,13 +17,11 @@ const Camera = (function() {
             });
             videoEl.srcObject = stream;
 
-            // Video metadata yüklenene kadar bekle
-            await new Promise((resolve, reject) => {
+            await new Promise((resolve) => {
                 videoEl.onloadedmetadata = () => {
                     videoEl.play().then(resolve).catch(resolve);
                 };
-                videoEl.onerror = reject;
-                // 5 saniye timeout
+                videoEl.onerror = resolve;
                 setTimeout(resolve, 5000);
             });
 
@@ -36,19 +31,6 @@ const Camera = (function() {
             console.error("Kamera hatası:", err);
             alert("Kameraya erişilemedi. Lütfen tarayıcı izinlerini kontrol edin.");
         }
-    }
-
-    function updateOverlaySize() {
-        const settings = Settings.getAll();
-        const ratio = settings.photoWidth / settings.photoHeight;
-        
-        // Overlay genişliğini container'ın %60'ı yap, yüksekliği orana göre hesapla
-        const containerWidth = 600; // max-width
-        const overlayWidth = containerWidth * 0.5;
-        const overlayHeight = overlayWidth / ratio;
-        
-        overlayEl.style.width = overlayWidth + 'px';
-        overlayEl.style.height = overlayHeight + 'px';
     }
 
     async function capture() {
